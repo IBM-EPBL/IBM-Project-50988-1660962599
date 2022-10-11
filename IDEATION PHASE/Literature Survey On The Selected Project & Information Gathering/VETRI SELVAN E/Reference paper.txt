@@ -1,0 +1,1945 @@
+1
+Reliable Smart Road Signs
+Muhammed O. Sayin, Chung-Wei Lin, Eunsuk Kang,
+Shinichi Shiraishi, and Tamer Bas¸ar, Life Fellow, IEEE
+Abstract—In this paper, we propose a game theoretical adversarial
+intervention detection mechanism for reliable smart
+road signs. A future trend in intelligent transportation systems is
+“smart road signs” that incorporate smart codes (e.g., visible at
+infrared) on their surface to provide more detailed information
+to smart vehicles. Such smart codes make road sign classification
+problem aligned with communication settings more than conventional
+classification. This enables us to integrate well-established
+results in communication theory, e.g., error-correction methods,
+into road sign classification problem. Recently, vision-based road
+sign classification algorithms have been shown to be vulnerable
+against (even) small scale adversarial interventions that are
+imperceptible for humans. On the other hand, smart codes
+constructed via error-correction methods can lead to robustness
+against small scale intelligent or random perturbations on them.
+In the recognition of smart road signs, however, humans are out
+of the loop since they cannot see or interpret them. Therefore,
+there is no equivalent concept of imperceptible perturbations
+in order to achieve a comparable performance with humans.
+Robustness against small scale perturbations would not be
+sufficient since the attacker can attack more aggressively without
+such a constraint. Under a game theoretical solution concept, we
+seek to ensure certain measure of guarantees against even the
+worst case (intelligent) attackers that can perturb the signal even
+at large scale. We provide a randomized detection strategy based
+on the distance between the decoder output and the received
+input, i.e., error rate. Finally, we examine the performance of
+the proposed scheme over various scenarios.
+Index Terms—Game theory; Autonomous driving; Traffic sign
+recognition; Adversarial classification; Certifiable machine learning.
+I. INTRODUCTION
+MACHINE learning is one of the key enabling technologies
+for autonomous vehicles. An autonomous vehicle
+can learn how to recognize the surroundings and can base its
+strategic decisions on the information learnt. It is only a matter
+of time for autonomous driving to replace of human drivers
+completely. However, for the time being, there are still important,
+yet not completely addressed, challenges for autonomous
+driving. Road-sign classification is one of these challenges.
+Varying weather conditions, changing lighting throughout the
+day and occlusion are known to pose challenges to road-sign
+recognition/classification in real-time [1]. However, recently,
+it has been shown that there can also be physical adversarial
+This research was partially supported by the U.S. Office of Naval Research
+(ONR) MURI grant N00014-16-2710.
+M. O. Sayin and T. Bas¸ar are with the Department of Electrical and
+Computer Engineering, University of Illinois at Urbana-Champain, Urbana,
+IL, 61801, USA (e-mail: fsayin2,basar1g@illinois.edu).
+C.-W. Lin is with National Taiwan University, Taipei, Taiwan (email:
+cwlin@csie.ntu.edu.tw).
+E. Kang is with Carnegie Mellon University, Pittsburgh, PA, 15213 USA
+(email: eskang@cmu.edu).
+S. Shiraishi is with Toyota InfoTechonology Center Co., Ltd., Minato-ku,
+Tokyo, 107-0052, Japan (e-mail: sshiraishi@jp.toyota-itc.com).
+modifications, e.g., stickers or graffiti, on the road signs to
+mislead the classification algorithms [2].
+A. Prior Literature
+In the field of intelligent transportation systems, there have
+been extensive effort to mitigate the former challenge [3]–
+[9]. In [3], the authors have studied convolutional neural
+networks trained according to hinge loss stochastic gradient
+descent to achieve fast and stable convergence rates with
+substantial recognition performance. In [4] and [5], the authors
+have proposed text-based detection systems for traffic panels
+that could include information that can vary substantially.
+Computational complexity of the recognition algorithms plays
+a significant role for real-time applications since autonomous
+vehicles are time-critical systems [6], [7]. In [6], the authors
+have sought to enhance the performance of convolutional neural
+networks for faster performance in real-time applications
+through localization of the traffic-signs in the input images
+based on their types. In [7], the authors have proposed kernelbased
+extreme learning machines with deep perceptual features
+to achieve comparable performance to hinge-loss stochastic
+gradient based convolutional neural networks (proposed in [3])
+with reduced computational complexity. Tree-based hierarchical
+structures have also been proposed to achieve coarse-tofine
+road sign detection [8], [9].
+Different from the previous works [3]–[9], however, in this
+paper, we seek to address the latter challenge, i.e., road-sign
+classification in adversarial environments, where there can
+be an intelligent attacker modifying road signs physically as
+exemplified in [2]. Especially for vision-based classification
+algorithms, it is an important issue that an attacker could
+craft the input through perturbations that are imperceptible
+for humans (i.e., a human would still easily classify the
+input correctly) while the algorithm classifies the input as the
+attacker’s targeted class [2], [10]–[13]. Such an input sample is
+called adversarial example [10]. Recently, substantial amount
+of defense methods have been proposed to make machine
+learning algorithms robust against adversarial scenarios. These
+defense methods have been developed to provide robustness
+against certain classes of attacks, and it has been shown that
+it is possible to bypass them all via small modification of the
+attacks [12].
+B. Smart Road Signs
+Our goal, here, is to achieve reliable identification of
+road signs by smart vehicles without limiting the solution
+to learning-based techniques. Particularly, we can view the
+road-sign classification problem from a wider perspective as a
+communication problem. The road sign and smart vehicle can
+arXiv:1901.10622v2 [cs.LG] 3 Jun 2019
+2
+(a) Visual Image (b) Infrared Image of
+Smart Code
+(c) Original Codeword
+(d) Infrared Image of
+Smart Code Attacked
+(e) Codeword Attacked
+Fig. 1: Examples of a road sign with smart code and an attack (an infrared star-shaped drawing on the right-bottom corner).
+be viewed as a transmitter and a receiver, respectively. Then,
+the message is the type of the road sign, the signal carrying
+that message is the physical road sign, and the signal received
+is its digital image taken by the smart vehicle. The relation in
+between the signals sent and received, i.e., physical road sign
+and its digital image, can be modeled via a noisy channel
+that can lead to errors in the transmitted message. Based on
+this viewpoint, we can reconfigure this information flow by
+also designing the signal, i.e., the physical road sign, via the
+well-established tools developed in communication theory.
+How we can re-design physical road signs and which
+medium we can choose to transmit information are only
+limited by our imagination and the corresponding financial
+burden to adapt the infrastructure. For example, at each road
+sign, we could have included road side units that can transmit
+the message via dedicated short range communication (DSRC)
+radios [14], [15] although there might also be adversarial
+interventions on those radio signals [15], [16]. However,
+the future trend in road signs is to include (e.g., infrared)
+smart codes that can be read by smart vehicles as illustrated
+figuratively in Fig. 1b [17], [18]. Such smart codes provide
+flexibility in transmiting more information to smart vehicles
+instead of just the type of road signs.
+Remark. Due to the regularity of smart codes, e.g., see Fig. 1,
+we can identify them via image processing techniques instead
+of learning-based techniques. For example, in [19], the authors
+use a simularity measure to identify the countdown numbers
+in a traffic light, instead of traditional number recognition
+algorithms. Furthermore, quick response (QR) codes constitute
+another example where we can incorporate image processing
+techniques to identify the underlying code, e.g., [20].
+We can attain reliable information transmission with certain
+formal guarantees when we construct the smart codes
+via error-correction methods. Particularly, in coding theory,
+error correction methods introduce redundancy to signals, i.e.,
+codewords, in order to recover the underlying message as
+accurately as possible when there is a noisy channel that
+can perturb the signal [21]. Correspondingly, if the amount
+of perturbation on the smart code, due to some physical
+modifications as seen in Fig. 1d, were less than half of the
+minimum distance between any two codewords, then we could
+have recovered the underlying codeword without any error.
+However, this is not the end of the story as explained below.
+C. Motivation
+Recall that physical adversarial examples in visual tasks are
+defined as inputs crafted by an intelligent attacker in order
+to mislead the classification algorithms while a human can
+still classify it accurately without any difficulty [2], [13].
+This challenge is important to mitigate in order to attain a
+comparable performance with human drivers. However, such
+a threat model is not appropriate for smart codes since they
+will not be visible to humans and even if they were visible,
+they are not interpretable by humans manually easily. Since
+humans are out of the loop, there will not be such a constraint
+limiting the perturbation amount on the attack that we are
+seeking to defend against. In the literature of communication
+in adversarial environments [22], [23], it is evident that it will
+not be sufficient for smart codes to be robust against just small
+scale perturbations if the adversary is powerful to launch large
+scale perturbation. Therefore, we introduce a new threat model
+where the intelligent adversary can also perturb the input at
+large scale in order to lead to erroneous decoding.
+Given a codeword received, our goal is to detect whether
+there exists an adversarial intervention or not, e.g., as illustrated
+in Fig. 1e. Note that the perceived codeword might
+differ from the original codeword not only due to adversarial
+intervention but also due to random perturbations that
+inevitably appear in the process of interpreting the infrared
+image of the smart code. Indeed, the presence of such random
+perturbations is the main reason to incorporate error correction
+methods while constructing the smart codes. Note also that an
+intelligent attacker attacks by taking the detection mechanisms
+into account. Correspondingly, while designing the detection
+strategy, we need to anticipate the reaction of the attacker.
+However, one-level depth reasoning where the detector designs
+the strategy by anticipating the reaction of the attacker would
+not be effective if the attacker has taken this proactive defense
+into account and has reacted in a way that can undermine
+it. In [12], the authors have shown this phenomenon by
+bypassing the state-of-the-art defense mechanisms through
+strategic modification of the attack (those mechanisms defend
+against). To mitigate this issue, we propose to design the detection
+strategies under the solution concept of game theoretical
+equilibrium [24]. However, this paper is definitely not the first
+one approaching the adversarial classification (or intervention
+detection) problem through a game-theoretical lens. In the
+following, we review these studies.
+3
+D. Game Theoretical Approaches
+In [25], the authors have introduced a non-zero sum game
+between an attacker and a classifier; however, they have not
+studied any notion of equilibrium. In [26], [27], the authors
+have studied adversarial prediction problems for a certain class
+of learners, e.g., support-vector-machines, in terms of Nash
+and Stackelberg equilibria, respectively. Recently, in [28], the
+authors have analyzed adversarial binary-classification as a
+non-zero sum game between an attacker and a classifier. The
+classifier seeks to detect whether the input is coming from
+the attacker or from a known benign-distribution. On the
+other side, the attacker seeks to maximize his reward (which
+depends on the input) without being detected by the classifier.
+The authors have shown that the classifier can restrict the
+strategies to mixtures of classifiers setting threshold on the
+reward of the attacker without any loss of generality. However,
+the results in [28] cannot be extended to our problem setting
+since the codeword attacked can also be perturbed randomly
+in the process of reading it. Due to that randomness, different
+attacks with different rewards can lead to the same codeword
+received. Therefore, given the received codeword, the defender
+cannot know the attacker’s reward to compare it against such
+a threshold.
+E. Our Contributions
+In this paper, we propose an adversarial intervention detection
+mechanism for smart road signs in order to ensure
+reliable recognition by smart vehicles. We model the interaction
+between the detection mechanism and attackers as a zerosum
+Stackelberg game [24] where the detector is the leader.
+Particularly, attackers can attack road signs by physically modifying
+their smart codes at large or small scales, as illustrated
+in Fig. 1d, while knowing the detection mechanism. The
+detector seeks to minimize a performance metric that includes
+cost of losing the opportunity of preventing future attacks by
+not being able to detect it now, cost of adversary-induced
+decoding errors or failures, false alarm cost, and easiness
+of deceptive perturbations. Against the worst-case attacker
+who seeks to maximize the detector’s performance metric,
+the detector designs a randomized detection rule based on
+the distance between the received codeword and the decoder
+output, i.e., error rate.
+The game theoretical solution concept yields that the detector
+needs to anticipate the attacker’s best reaction to the
+proposed detection policy. However, large size of the attacker’s
+strategy space can lead to computational issue while computing
+the best detection rule offline. To this end, we examine the
+attacker’s actions and show that the attacker can be viewed as
+selecting an action from a quotient space of the actual attack
+space with respect to a certain equivalence relation, which
+will be described in detail in Subsection IV-A. However, that
+quotient space can still be large to search over if there are
+many distinct road signs. Accordingly, we provide a method
+to relax the attack space to address such computational issues
+in Subsection IV-C. This conservative relaxation where the
+attacker is viewed to possess more power than in practice
+enables us to transform the problem into an efficient linear
+program (LP) with substantially smaller size. In addition to
+game theoretical results, we also analyze the performance of
+the proposed detection mechanism numerically over various
+scenarios.
+Our main contributions are as follows:
+Y To the best of our knowledge, this is the first work in
+the literature to address adversarial intervention on smart
+road signs within a game theoretical framework.
+Y The randomized detection rule developed under the solution
+concept of game theoretical equilibrium ensures
+robustness against the worst-case attacker that attacks to
+maximize the cost for the detector while knowing the
+detection mechanism.
+Y By relaxing the attacker’s strategy space, we provide
+an efficient (offline) LP-based algorithm to compute the
+best randomized detection strategy, which can reduce the
+verification complexity.
+The paper is organized as follows: In Section II, we provide
+preliminary information about error-correction coding. In Section
+III, we formulate the problem. In Section IV, we analyze
+the equilibrium of the game. We provide numerical examples
+in Section V. We conclude the paper and identify possible
+research directions in Section VI.
+NOMENCLATURE
+Problem Setting:
+[n; k; d]q linear block code
+n > Z codeword length
+k > Z message length
+d > Z (minimum) distance of the code
+do = 
+(d - 1)~2 error-correction diameter
+ alphabet of the symbols
+q = SS alphabet size
+n set of all codewords
+no
+` n set of encoded codewords
+nd
+` n set of decodable codewords
+xo > no
+encoded codeword
+y > n received (noisy) codeword
+^y > no
+decoder output for decodable y
+p(ySx) noisy channel
+p(xo); xo > no
+probability of xo > no
+pe > [0; 1] probability of error in a symbol
+H  n × n ?? Z Hamming distance
+Game Setting:
+G road-sign classification game
+PA Attacker
+PD Detector
+U(; ) PD’s cost function
+ > [0; 1]do+1 PD’s randomized detection rule
+ao > no
+attacked codeword
+ax > n crafted codeword
+a = (ao; ax) PA’s (pure) action
+A = no
+× n PA’s action space
+ = {a} > SAS-1 PA’s mixed strategy
+`  no
+× n ?? {0; 1} loss due to decoding error/failure
+j C 0; j = 1; : : : ; 4 multiplicative factors
+4
+…
+…
+Attacker
+Detector
+…
+?
+Noise
+in
+Reading
+…
+Encoder Decoder
+Codeword Space n
+Road Signs Smart Codes -
+Fig. 2: A figurative illustration of the interaction in-between PA and PD. PA selects which road sign to attack and attacks its
+codeword by changing the symbols physically as exemplified in Fig. 1d. PD observes a noisy version of the codeword and
+seeks to detect whether there has been an attack or not.
+II. PRELIMINARIES IN ERROR CORRECTION CODING
+Error correction codes provide certain formal guarantees for
+the transmission of digital data over noisy channels as long as
+the deviation on the message sent due to random/intelligent
+noise is less than a certain threshold with respect to a certain
+distance metric [21]. Since a smart code can be viewed as a
+finite-size block and perturbations can be viewed as Boolean
+operations, e.g., flipped bits, we specifically consider linear
+block codes, which encode data in blocks. They are called
+linear because any linear combination of codewords is also a
+codeword. Formally, a linear block code, denoted by [n; k; d]q,
+operates over a finite alphabet of symbols whose size is
+denoted by q > Z, and maps k > Z symbols to n > Z
+symbols. The (minimum) distance of a block, denoted by
+d > Z, is the minimum number of positions where any two
+distinct codewords differ, i.e., the Hamming distance [21] inbetween
+the distinct codewords. The abstraction of the code
+via [n; k; d]q enables us to study all the linear block codes in
+a unified way.
+We emphasize that the Singleton bound [29], [30] that all
+linear block codes satisfy is given by
+d B n - k + 1; (1)
+where the equality holds for Reed-Solomon codes [31]. Furthermore,
+the minimum distance d implies that the block code
+can detect d - 1 symbol errors and correct up to
+do = d - 1
+2
+ (2)
+symbol errors since there exists no other codeword within d-1
+diameter of each codeword.
+Consider that the number of symbol errors, denoted by e >
+Z, is more than half of the minimum distance, i.e., e > do.
+We say that a decoding error exists if the Hamming distance
+between the received codeword and any other codeword is less
+than or equal to do, i.e., if we decode it erroneously. Further,
+we say that a decoding failure exists if the Hamming distance
+between the received codeword and all the other codewords is
+more than do, i.e., if the received codeword is not decodable
+[32].
+III. PROBLEM FORMULATION
+Consider that road signs are encoded into smart codes via
+a linear block code [n; k; d]q, and there exist two players: an
+attacker (PA) and a detector (PD), as seen in Fig. 2. Given
+the encoding-decoding scheme and the underlying statistical
+profiles, PD seeks to detect any intervention by PA while PA
+seeks to modify the smart codes physically, as exemplified in
+Fig. 1d, in order to lead to decoding error/failure stealthily.
+Noise Model. The decoder reads a noisy version of the smart
+code due to, e.g., lighting-induced blurring or harsh weather
+conditions. Let n denote the codeword space. Then, we
+model this noise via a probability transition mapping p(ySx)
+corresponding to the probability of receiving codeword y > n
+given that the transmitted codeword is x > n. We suppose
+that all the symbol errors by nature are equally likely and
+independent of each other. We denote the probability that there
+can be an error in a symbol by pe > [0; 1]. We also suppose that
+the change of the symbol to any other symbol in the alphabet
+is equally likely in a symbol error.
+Remark (Symbol Error). In a codeword, a symbol consists of
+multiple contiguous bits. A symbol error occurs if at least
+one of these bits is perturbed. Correspondingly, if random
+perturbations infect multiple contiguous bits, the number of
+symbol errors is an appropriate distance measure. This is
+indeed the case in smart road signs due to possible obfuscation
+by plants or graffiti or adversarial stickers as studied in [2]
+or as illustrated in Fig. 1d. When there are blurring due to
+lighting throughout a day, fading colors, or weather conditions,
+we would also expect perturbations on multiple contiguous
+bits, instead of perturbations on single isolated bits (which
+may require surgical-like precision due to the relatively small
+size of a single bit). Furthermore, error-correction codes,
+e.g., Reed-Solomon codes, provide effective guarantees against
+symbol errors.
+Defense Model. PD has multiple objectives:
+O1) to minimize the cost of losing the opportunity to prevent
+future attacks by not being able to detect it now,
+O2) to minimize the cost associated with adversary-induced
+decoding error/failure,
+O3) to minimize the cost associated with false alarms,
+5
+O4) to maximize the number of symbol errors necessary to
+deceive the decoder.
+We model PD’s cost function as a linear combination of
+these objectives with certain multiplicative factors, which give
+flexibility to control the weight of the corresponding objective
+as desired. This cost function will be defined explicitly in the
+game model.
+We let no
+` n denote the set of encoded codewords, i.e.,
+there exists bijective relation in-between no
+and the set of
+road signs. We also let nd
+` n denote the set of decodable
+codewords that are within do diameter of a codeword in no
+.
+If y > nd
+, we denote the decoder output by ^y > no
+. The loss
+due to decoding error/failure is given by
+`(xo; y) = ? 0 if y > nd
+and ^y = xo
+1 otherwise. (3)
+If y > nd
+, PD can report an issue against the possibility of
+adversarial intrusion so that further (costly) investigations can
+take place. To this end, PD designs a randomized detection
+rule  > [0; 1]do+1, where j , j = 0; : : : ; do, corresponds to
+the probability of triggering an alert for j symbol errors. If
+y ¶ nd
+, further investigations always take place.
+Remark (Scalable Defense). We consider a randomized detection
+rule depending on the number of symbol errors for
+scalability. If PD were to select a (randomized) detection rule
+based on the received codeword, then PD would select a vector
+over the space [0; 1]SnS, which is qn dimensional. Note that qn
+is exponential in the number of symbols n whereas do+1 P qn
+is linear in n.
+Threat Model. PA is the worst case attacker who maximizes
+PD’s cost function. To this end, PA can select which road sign
+to attack. Let ao > no
+denote the codeword of the attacked road
+sign. Then, PA can craft ao > no
+to ax > n by introducing
+error in order to control the decoder output. The complexity of
+this crafting is given by the number of symbols changed, i.e.,
+H(ao; ax). We denote PA’s action space by A = no
+×n and
+denote PA’s action by a = (ao; ax). PA can select a mixed
+strategy  = {a} over A such that a denotes the probability
+of taking action a = (ao; ax) > A, i.e., attacking the codeword
+ao > no
+and crafting it to ax > n.
+Game Model. We consider a zero-sum game setting where
+PD seeks to minimize the cost function:
+U(; ) = 1 Q
+a>A
+a
+?
+?
+doQ
+j=0
+(1 - j) Q
+y>n
+d
+?H(y;^y)=j
+p(ySax)
+?
+?
++2 Q
+a>A
+a Q
+y>n
+`(ao; y)p(ySax)
++3
+doQ
+j=0
+j Q
+xo>no
+Q
+y>n
+d
+?H(y;xo)=j
+p(ySxo)p(xo)
+-4 Q
+a>A
+aH(ao; ax) (4)
+against the worst-case PA who seeks to maximize (4). We
+define certain multiplicative factors j C 0, j = 1; 2; 3; 4, corresponding,
+respectively, to PD’s objectives O1) -O4). Note
+that minimization of the expected cost due to the uncertainty
+of the channel p(ySx) is in-line with the expectation-overtransformation
+framework proposed in [13]. The attackers can
+generate robust attacks by considering the expected impact of
+the uncertainties due to the channel [13].
+Remark (Attack Probability). If PD has a priori information
+pa > [0; 1] corresponding to the probability of adversarial
+intervention, then we can incorporate this into (4) by selecting
+the multiplicative factors accordingly. For example, the objectives
+O1), O2), and O4) matter if there is an adversarial
+intervention while the objective O3) matters if there is no
+adversarial intervention. To this end, we can scale up 1, 2,
+and 4 by pa while scaling up 3 by 1 - pa.
+We consider a hierarchical setting, where PA can know
+(or learn) PD’s randomized detection algorithm, in order
+to avoid obscurity based defense, which can be bypassed
+when an advanced attacker learns the information in obscurity.
+Therefore, this interaction can be modeled as a Stackelberg
+zero-sum game1
+G = (SAS-1; [0; 1]do+1;U; `(??); p(ySx); p(xo); {j}); (5)
+where PD is the leader and PA is the follower. Since PA is
+the follower and reacts to PD’s strategy  > [0; 1]do+1, the
+problem faced by the detector is given by
+min
+>[0;1]do+1
+max
+>SAS-1
+U(; ): (6)
+The following proposition shows that there exists an equilibrium
+to the game G.
+Proposition 1 (Existence Result). There exists a pair of
+PD’s strategy and PA’s reaction (?;B(?)) attaining the
+Stackelberg equilibrium G, i.e., satisfying (6).
+Proof. Note that U(; ) is linear, and correspondingly, continuous
+in the optimization arguments  > SAS-1 and  >
+[0; 1]do+1, and the constraint sets are decoupled. Therefore
+the maximum theorem [33] yields that
+max
+>SAS-1
+U(; ) (7)
+is a continuous function of  > [0; 1]do+1. Then, since
+[0; 1]do+1 is a compact set, the extreme value theorem yields
+that there exits a solution for (6).
+In the following section, we analyze the equilibrium to G.
+IV. ADVERSARIAL INTERVENTION DETECTION ACROSS
+SMART ROAD SIGNS
+Existence of an equilibrium is guaranteed as shown in
+Proposition 1. However, computation of the equilibrium can
+be demanding (even if it is an offline computation) since
+PA has a large strategy space, even for short codewords. In
+this section, our goal is to examine PA’s best response for
+efficient computation of the best detection rule. To this end,
+we first seek to formulate certain equivalence classes over
+PA’s actions such that all the actions in a class lead to the
+same outcome of the game (see, Subsection IV-A). However,
+1d-1 ` Rd denotes the probability simplex formed by d standard unit
+vectors.
+6
+x1
+o
+x2
+o x3
+o
+Choice-3
+Choice-0
+Decodable Region
+1 error
+Choice-1
+2 errors
+Choice-2
+3 errors
+4 errors
+Fig. 3: Figurative illustration of n for the Reed-Solomon
+Code [7; 3; 5]q. Suppose the attacked codeword is ao = x1
+o .
+Decodable regions for the codewords x1
+o; x2
+o; x3
+o > no
+are
+shaded and arcs correspond to the levels of symbol errors.
+The color coded arrows illustrate figuratively how the corresponding
+level of symbol error would change with additional
+nature-induced noisy perturbation of the crafted codeword.
+depending on the size of the input space, i.e., n, computation
+of the equilibrium may still be demanding for that quotient
+space. In order to avoid such a computational issue for long
+codewords that can express relatively larger collection of road
+signs, we relax the constraints on PA’s action space, which
+will lead to more powerful attacker than in practice (see,
+Subsection IV-C). This yields a conservative defense, which
+leads to lower cost against the actual attacker who is relatively
+less powerful in run-time applications. Finally, we transform
+the problem into an efficient LP, rather routinely, in order to
+apply existing powerful computational tools to compute the
+best detection rule. We now provide the details of these steps.
+Our goal is to compute the best detection rule ? >
+[0; 1]do+1 with respect to the equilibrium (6). To this end,
+PD needs to anticipate PA’s reaction to any selected detection
+rule. However, PA’s action space A has dimension SAS = qn+k,
+which is exponential in n + k. Therefore, finding the best
+reaction, i.e., a vector in SAS-1, for each detection rule is
+computationally demanding. Accordingly, in the following,
+we seek to reduce PA’s strategy space without losing the
+generality.
+A. Equivalence Classes on PA’s Best Response
+Fig. 3 provides a figurative illustration of how PA can
+attack. Note that error-correction methods ensure that different
+encoded codewords are at least a certain number of symbols
+away from each other. For the code [7; 3; 5]q in Fig. 3,
+this minimum distance is d = 5 symbols as exemplified in
+between x1
+o and x2
+o. Any perturbation that can change at most
+do = 2 symbols does not lead to any decoding error or failure.
+However, at certain directions, perturbations on 3 symbols can
+lead to a decoding error, e.g., by carrying x1
+o to the decodable
+region of x2
+o, or a decoding failure depending on how and
+which symbols are perturbed. Correspondingly, if PA decides
+to attack on ao = x1
+o, then PA has several choices while
+physically damaging the corresponding smart code. In the
+following, we categorize those choices into four main groups:
+C0) PA may not attack, i.e., may not introduce any error.
+C1) PA may introduce relatively smaller amount of symbol
+error(s) such that the corrupted codeword is still in the
+decodable region of the associated codeword. Due to the
+channel, this can still lead to decoding error or failure
+with certain probabilities.
+C2) PA may introduce symbol errors such that the corrupted
+codeword becomes not decodable.
+C3) PA may introduce relatively larger amount of symbol errors
+such that the codeword intervened is in the decodable
+region of another codeword.
+Even if there were not any detection rule, in Fig. 3, we
+observe that not attacking, i.e., C0), or attacking relatively
+more aggressively, e.g., C2) and C3), are not necessarily more
+preferable for PA than C1) due to the noisy perturbations and
+the trade-off between the amount of perturbation and the gain
+of PA by decoding error/failure. In the following, we examine
+the channel, which can lead to such intriguing results.
+Recall that any symbol can be perturbed by the channel
+with the same probability pe while the symbol perturbed can
+change to any other symbol in the alphabet with the same
+probability, i.e., 1~(q - 1). Then, the probability that x turns
+into y due to noisy channel can be written as
+p(ySx) = (1 - pe)n-H(y;x) ? pe
+q - 1
+
+H(y;x)
+; (8)
+which only depends on the distance in-between y > n and x >
+n. Particularly, there are n-H(y; x) symbols that match at x
+and y. There should not be any perturbations on those symbols,
+which leads to the first multiplicative term on the right-handside
+of (8). For each symbol that does not match, the random
+perturbation must change the one at x to the corresponding
+one at y among q - 1 equally likely alternatives, which leads
+to the second multiplicative term.
+Since p(ySx) only depends on H(y; x), we define an
+auxiliary metric   Z × Z ?? [0; 1], where (n1;n2) denotes
+the probability that two codewords that are n1 > Z symbols
+away become n2 > Z symbols away when one of them is
+randomly perturbed by the channel. Note that we can compute
+(??) based on combinatorics analytically or using the Monte
+Carlo method [34] numerically. With this new auxiliary metric,
+let us take a closer look into the objectives O1) and O2),
+where the channel and PA have impact on. Firstly, the term
+in parenthesis in O1) can be written as
+doQ
+j=0
+(1 - j) Q
+y>n
+d
+?H(y;^y)=j
+p(ySax) =
+doQ
+j=0
+(1 - j) Q
+xo>no
+(H(xo; ax); j)
+´¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¸¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¶
+;
+(9)
+where the under-braced term corresponds to the total probability
+that ax moves to j symbols away from an encoded
+7
+codeword due to the random noise. Similarly, we can write
+the inner summation in O2) as
+Q
+y>n
+`(ao; y)p(ySax) = Q
+y>n
+1{H(ao;y)>do}p(ySax) (10)
+= 1 -
+doQ
+t=0
+(H(ao; ax); t); (11)
+where the first line follows since a detection error or failure
+occurs if the received codeword y > n is more than do > Z
+symbols away from the codeword ao > no
+before PA crafts it
+into ax > n. The second line follows by the definition of the
+new auxiliary metric (??).
+Note that O1) written according to (9) depends on the
+distance between ax > n and all the encoded codewords
+xo > no
+. Similarly, only the distance between ao > no
+and
+ax > n has an impact on O2) and O4) while we also have
+ao > no
+. Therefore, the attacks that target ao have the same
+impact on the cost function (4) if the distances between ax
+and the encoded codewords are the same.
+Indeed, there is a strong coupling on how PA would select
+ao and ax independent of PD’s strategy. Particularly, (9), and
+correspondingly O1), do not include ao > no
+. On the other
+side, the objectives O2) and O4), which include ao > no
+, do
+not include  > [0; 1]do+1. Therefore for given ax > n, PA
+can select ao > no
+irrespective of PD’s detection rule. Based
+on this observation in the following lemma, we eliminate
+weakly dominated actions of PA in order to reduce the size
+of PA’s strategy space.
+Lemma 1. In the game G, without loss of generality, we can
+restrict PA’s action space A into
+Ad = {(a?o
+; ax > n)}; (12)
+where a?o
+is the maximizer of the optimization problem:
+max
+ao>no
+2?1 -
+doQ
+t=0
+(H(ao; ax); t) - 4H(ao; ax): (13)
+Proof. The terms corresponding to O2) and O4) in (4) can
+be written as
+2 Q
+a>A
+a Q
+y>n
+`(ao; y)p(ySax) - 4 Q
+a>A
+aH(ao; ax)
+= Q
+a>A
+a?2?1 -
+doQ
+t=0
+(H(ao; ax); t) - 4H(ao; ax)?; (14)
+which follows by (11). Since PA seeks to maximize the cost
+(4), for each ax > n, we can compute the associated optimal
+attacked codeword, i.e., a?o, via (13), where a solution is
+guaranteed to exists since the constraint set no
+is finite.
+Note also that (9), (11), and (13) depend only on the
+distances between ax > n and all the encoded codewords.
+Therefore, for a given detection rule, any other ~ax > n
+that has the same set of distances to the encoded codewords
+would lead to the same cost (4). Correspondingly, we define
+another auxiliary function h  n ?? ZSn
+o S such that h(ax) is a
+vector whose tth entry, denoted by ht(ax), corresponds to the
+distance in-between ax and the tth encoded codeword (with
+respect to a certain order in no
+). Then, given h(ax), (13) can
+be written as
+r(h(ax)) = max Òh
+>{h(ax)}
+2 - 4Òh
+- 2
+doQ
+t=0
+(Òh; t); (15)
+where {h(ax)} denotes the set including the entries of the
+vector h(ax). We can view r(h(ax)) as the reward of PA
+for h(ax). Therefore, by (9), (11), and (15), the cost function
+U(; ) can be written as
+U(; ) = 1 Q
+a>Ad
+a?
+doQ
+j=0
+(1 - j)
+Sn
+o S
+Q
+t=1
+(ht(ax); j)?
++3
+doQ
+j=0
+j Q
+xo>no
+Q
+y>n
+d
+?H(y;xo)=j
+p(ySxo)p(xo)
++ Q
+a>Ad
+ar(h(ax)): (16)
+The following lemma recaps these results to formulate the
+equivalence classes on PA’s best response.
+Lemma 2. Without loss of generality, instead of mixing over
+A, PA can select a mixed strategy across the quotient set
+Ad~  with respect to the following equivalence relation:
+(a?o
+; ax)  (~a?o; ~ax)h(ax) = Ph(a?
+x); (17)
+for some permutation matrix P > {0; 1}Sn
+o S×Sn
+o S.
+Proof. The cost function, as written in the form of (16),
+depends on ax > n only with respect to the distances between
+ax > n and the encoded codewords xo > no
+while the
+specific identities of the encoded codewords do not impact
+the cost function. Correspondingly, any permutation of the
+distances across the encoded codewords would lead to the
+same cost.
+In order to facilitate the analysis of the equilibrium, we,
+next, seek to write the cost function (20) in a compact form.
+B. Equilibrium in Compact Form
+Up to now, we have focused on the objectives except O3),
+on which PA’s strategy does not have direct impact. Similar
+to (9), via the auxiliary functions (??) and h(??), we can write
+O3) as
+3
+doQ
+j=0
+j Q
+xo>no
+Q
+y>n
+d
+?H(y;xo)=j
+p(ySxo)p(xo)
+= 3
+doQ
+j=0
+j Q
+xo>no
+p(xo) Q
+~xo>no
+(H(~xo; xo); j) (18)
+= 3
+doQ
+j=0
+j Q
+xo>no
+p(xo)
+Sn
+o S
+Q
+t=1
+(ht(xo); j): (19)
+8
+By including (19) in (16) and invoking Lemma 2, we can
+write the cost function in a way that confines the impact of
+the channel into the auxiliary metric (??):
+U(; ) = Q
+a>Ad~
+doQ
+j=0
+aj? - 1
+Sn
+o S
+Q
+t=1
+(ht(ax); j)?
++ Q
+a>Ad~
+a?r(h(ax)) + 1
+doQ
+j=0
+Sn
+o S
+Q
+t=1
+(ht(ax); j)?
++
+doQ
+j=0
+j?3 Q
+xo>no
+p(xo)
+Sn
+o S
+Q
+t=1
+(ht(xo); j)?: (20)
+Consider a certain order over the quotient space Ad~  such
+that, with a slight abuse of notation, i corresponds to the
+mixed strategy for the ith action in Ad~ . For notational
+simplicity, we also let  = SAd~  S and  = Sno
+S. Then, (20)
+can be written as
+U(; ) =
+Q
+i=1
+doQ
+j=0
+ij? - 1
+Q
+t=1
+(ht(ai
+x); j)?
++
+Q
+i=1
+i?r(h(ai
+x)) + 1
+doQ
+j=0
+Q
+t=1
+(ht(ai
+x); j)?
++
+doQ
+j=0
+j?3 Q
+xo>no
+p(xo)
+Q
+t=1
+(ht(xo); j)?: (21)
+which can also be transformed into a compact vectoral form.
+To this end, we define the vectors r > R and po > R , whose
+ith entries are given by r(h(ai
+x)) and p(xi
+o), respectively. We
+also introduce the matrices  > R×(do+1) and o > R×(do+1)
+whose ith row and (j + 1)th column entries are given by
+Q
+t=1
+(ht(ai
+x); j) and
+Q
+t=1
+(ht(xi
+o); j); (22)
+respectively. We note the shift at the column entries since we
+have j , j = 0; : : : ; do instead of 1; : : : ; do + 1. Then, we can
+write (20) as
+U(; ) = -1? + ?(r + 11) + 3p?
+oo; (23)
+which facilitates the computation of the equilibrium. However,
+the size of Ad~  can lead to computational issues for long
+codewords, i.e., large n, even though it has relatively smaller
+size compared to A without losing any generality as shown in
+Lemma 2. To mitigate this issue, in the following, we relax
+the attack space so that the size of the problem can be reduced
+further based on the derived equivalence relation (17).
+C. Relaxing Attack Space at Large Scales
+The cost function in the compact form (23) implies that
+we need to focus on the first and second additive terms that
+include PA’s mixed strategy in order to reduce PA’s strategy
+space. Note that on those additive terms,  is multiplied by
+the matrix  > R×(do+1) and the vector r > R. We can seek
+to exploit certain properties of  > R×(do+1) and r > R. To
+this end, we will first show that the matrix  > R×(do+1) can
+be written as in (28), where i > Zn+1 is a vector which can
+be viewed as the histogram of the distances from ai
+x to the
+encoded codewords, i.e., h(ai
+x). Next, we will examine h(ai
+x)
+in order to formulate necessary conditions on the histogram
+i. By only considering those necessary conditions, we relax
+PA’s strategy space such that he/she selects a mixed strategy
+from a strategy space with substantially smaller size. Now, we
+provide the technical details step by step.
+Step-1. A Closer Look at the Matrix : Recall that the ith
+row and the (j + 1)th column entry of  > R×(do+1) is given
+by
+Q
+t=1
+(ht(ai
+x); j); (24)
+where the summation is taken across all the encoded codewords.
+However, we can separate this summation into subsummations
+with respect to the distance from ai
+x to the
+encoded codewords. In particular, we have
+Q
+t=1
+(ht(ai
+x); j) =
+nQ
+m=0
+Q
+t>{1;:::;}
+?H(ai
+x;xt
+o)=m
+(ht(ai
+x); j) (25)
+=
+nQ
+m=0
+m
+i (m; j); (26)
+where m
+i > Z denotes the number of encoded codewords that
+are m symbols away from ai
+x, and the second line follows
+since ht(ai
+x) = m for all t that satisfies H(ai
+x; xt
+o) = m.
+Correspondingly, for each ai
+x > n, i = 1; : : : ; , we define
+the following n + 1 dimensional vector
+i = 0
+i  n
+i ?
+: (27)
+Then, (26) and (27) yield that  > R×(do+1) can be written
+as
+ =
+<@@@@@>
+?1
+
+?
+=AAAAA?
+<@@@@@>
+(0; 0)  (0; do)
+  
+(n; 0) : : : (n; do)
+=AAAAA?
+´¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¸¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¶
+=R
+: (28)
+Note that all the entries of i > Zn+1, i = 1; : : : ; , are
+non-negative integers and sum to the number of all encoded
+codewords  . However, these are not necessarily sufficient
+conditions. Note also that we can view the vector i as the
+histogram of the entries of h(ai
+x). Based on this observation,
+in the following, we seek for tighter necessary conditions on
+i by examining h(ai
+x).
+Step-2. An Upper Bound on min h(??): We first examine the
+minimum possible distance between an arbitrary codeword and
+an encoded codeword. Note that a codeword consists of the
+message and redundantly added symbols:
+>n
+³¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹·¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹µ
+ message
+´¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¸¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¶
+>k
+redundant symbols	 : (29)
+For each message in k, there exists a unique encoded
+codeword. Correspondingly the minimum distance between
+an arbitrary codeword ax > n and encoded codewords, i.e.,
+min h(ax), can be at most n - k since the message part of
+ax matches with at least one encoded codeword completely.
+Therefore, formally, we have
+0 B min h(ax) B n - k ¦ax > n: (30)
+9
+Step-3. A Gap in the Ordered {h(??)}: Since the codewords
+are encoded such that they are distributed across n with
+maximum distance in between them, if an arbitrary codeword
+is relatively close to one of the encoded codewords, e.g.,
+if it is inside the decodable region, the distances between
+that arbitrary codeword and the other encoded codewords are
+relatively large. In other words, when we list all the distances
+from that arbitrary codeword to the encoded codewords in
+ascending order, then there will be a jump between the distance
+to the closest one and the distance to the second closest one.
+For example, if ax = xo, then there is no other encoded
+codeword within a diameter of d - 1 symbols away from ax.
+Particularly, if ax > n is in a decodable region of an
+encoded codeword, e.g., xo > no
+; then xo is the encoded
+codeword closest to ax, i.e., min h(ax) = H(xo; ax), and there
+exists only that encoded codeword within d - min h(ax) - 1
+diameter.
+Step-4. A Contiguousness Assumption on the Ordered
+{h(??)}: We have formulated certain necessary conditions on
+the distance from an arbitrary codeword to the closest and
+second closest encoded codewords. For the distances to the
+other encoded codewords, we observe that at large scales, the
+number of messages qk, i.e., the number of encoded codewords,
+is significantly larger than the length of the codewords
+n. We suppose that if min h(ax) B do, then there exists at least
+one encoded codeword at the distances d - min h(ax); : : : ;n.
+Otherwise, i.e., if min h(ax) > do, there exists at least one
+encoded codeword at all the distances starting from the closest
+one min h(ax) to n. In particular, formally, we suppose that
+?max{d - min h(ax); min h(ax)}; : : : ;n? ` h(ax) (31)
+since d - min h(ax) C min h(ax) if ax is in the decodable
+region of an encoded codeword, i.e., min h(ax) B do = 
+(d -
+1)~2.
+Step-5. The Histogram Under Necessary Conditions: Based
+on the necessary conditions derived in Steps 2-4, in the
+following, we formulate the necessary conditions on i under
+two cases depending on min h(ai
+x). If ai
+x > n is in a
+decodable region, i.e., min h(ai
+x) B do, then we have
+m
+i =
+¢¨¨¨¦¨¨¨¤
+1 if m = min h(ai
+x)
+0 if m > {0; : : : ; d - min h(ai
+x) - 1};m x min h(ai
+x)
+? otherwise
+(32)
+where ? corresponds to an unspecified positive integer. If ai
+x >
+n is not in any decodable region, i.e., min h(ai
+x) > do, then
+we have
+m
+i = ? 0 if m > {0; : : : ; min h(ai
+x) - 1}
+? otherwise (33)
+Step-6. Approximation Under Necessary Conditions: Note
+that the unspecified entries of i may not necessarily take
+arbitrary values; however, we will relax this and suppose
+that the unspecified entries can be set to arbitrary values by
+PA as long as they are all positive and all entries sum to
+ . As an illustration, when we concatenate i for different
+scenarios where min h(ai
+x) varies from 0 to n - k, we obtain
+the following (n + 1) × (n - k + 1) matrix:
+0
+1
+
+do
+do + 1
+
+d - 1
+d
+
+n
+<@@@@@@@@@@@@@@@@@@@@>
+1 0  0 0  0
+0 1  0 0  0
+     
+0 0  1 0  0
+0 0  0~? ?  0
+      
+0 ?  ? ?  ?
+? ?  ? ?  ?
+    
+? ?  ? ?  ?
+=AAAAAAAAAAAAAAAAAAAA?
+; (34)
+where the entry denoted by 0~? is 0 if d is even, and is an
+unspecified positive integer if d is odd. For example, the first
+column corresponds to ai
+x whose min h(ai
+x) = 0, which yields
+that the second closest encoded codeword can be as close as
+d - min h(ai
+x) = d symbols away.
+Step-7. PA’s Relaxed Strategy Space: Based on the relaxation
+that the unspecified entries can take any values, we seek
+to reduce PA’s strategy space, which is the main reason of
+all the steps we have taken up to now. To this end, we first
+recall that the unspecified entries are all positive and add up
+to a certain number, which is  - 1 if min h(ai
+x) B do, and 
+otherwise. Let us consider an arbitrary column in (34), e.g.,
+mth column where m > do. Then, the set of all such possible
+i is given by
+{ > Zn+1  t = 0 if t < m; t > 0 o.w., and 1? = }: (35)
+Correspondingly, the set of extreme points2 of this set is given
+by
+{ei > Zn+1  eii
+=  -(n-m) and ej
+i = 1 if j C m; j x i}: (36)
+Note that any point in the set (35) can be expressed as a convex
+combination of its extreme points identified in (36).
+Therefore, we can express any convex combination of i,
+i = 1; : : : ; , by a convex combination of the columns of the
+matrix3  > Z(n+1)× defined in (37), where
+ =
+doQ
+i=0
+(n - d + i + 1) +
+n-k
+Q
+j=do+1
+(n - j + 1) (38)
+and n - k C do + 1 by the Singleton bound (1). In other
+words, under the relaxation, for any given mixed strategy 
+across Ad~ , there exists a mixed strategy  > -1 over the
+columns of  such that we have
+1   = ; (39)
+which, by (28), yields that
+? = ??R; (40)
+where R > R(n+1)×(do+1), as defined in (28).
+Step-8. A Closer Look at the Vector r: Next, we seek
+to compute the reward r(ai
+x). Recall that the reward for
+2We say that a point in a convex set is an extreme point if it cannot be
+expressed as a convex combination of two other points from that set.
+3We suppose that d is odd, i.e., do = (d - 1)~2. The matrix for the cases
+where d is even can be computed accordingly.
+10
+ =
+<@@@@@@@@@@@@@@@@@@@@@@@@@>
+1 1  0 0   0 0  0 0   0 0 
+0 0  1 1   0 0  0 0   0 0 
+          
+0 0  0 0   1 1  0 0   0 0 
+0 0  0 0   do 1  do+1 1   0 0 
+0 0  0 0   1 do  1 do+1   0 0 
+          
+0 0  1 1   1 1  1 1   n-k 1 
+0 1  1 1   1 1  1 1   1 n-k 
+1 0  1 1   1 1  1 1   1 1 
+         
+1 1  1 1   1 1  1 1   1 1 
+=AAAAAAAAAAAAAAAAAAAAAAAAA?
+(37)
+i = ?  - (n - d + i + 1) if i B do
+ - (n - i) o.w.
+ai
+x depends only on {h(ai
+x)}, as defined in (15). However,
+{h(ax)} depends only on min h(ax) as shown in Steps 2-
+4. Therefore, (31) yields that r(ai
+x) depends mainly on the
+distance to the closest encoded codeword. Based on (15) and
+(31), we define an auxiliary vector s > Rn-k+1, where si > R,
+for i = 0; : : : ;n - k, is given by
+si = max Òh
+>{0;:::;n}
+2 - 4Òh
+- 2
+doQ
+t=0
+(Òh; t) (41)
+s:t:Òh
+= i -Òh
+C max{d - i; i + 1};
+where - denotes the disjunction operation. This yields that
+si > R corresponds to the reward when min h(ax) = i.
+Note that for all ai
+x that have min h(ai
+x) = m, the associated
+reward is sm. Therefore, with the mixed strategy  > -1
+introduced in Step-7, we have
+r? = s?
+<@@@@@>
+1?
+
+1?
+=AAAAA?
+´¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¸¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¶
+=S
+; (42)
+where S > R(n-k+1)×, and the dimensions of the vector 1 at
+the ith row is n - d + i if i B do, and n - i if i > do.
+Step-9. Transforming PD’s Strategy Space to a Simplex at
+a Higher Dimensional Space: Our goal, here, is to transform
+PD’s strategy into a mixed strategy at a higher dimensional
+space in order to be able to transform the problem into an
+LP as will be explained in detail later in this section. To this
+end, we can view  > [0; 1]do+1 as PD selects do + 1 mixed
+strategies over two element sets, e.g., {0; 1}. This yields that
+PD selects a mixed strategy over the Cartesian product space
+of these sets, i.e., do
+i=0{0; 1}, which is
+ = 2do+1 (43)
+dimensional. For example, for do = 1, the corresponding
+mixed strategy, denoted by  > -1, is over
+{[1; 0; 1; 0]?; [1; 0; 0; 1]?; [0; 1; 1; 0]?; [0; 1; 0; 1]?}. This yields
+that there exists a matrix  > R(do+1)× such that  = .
+As an example, for do = 1, we have
+ = 1 1 0 0
+1 0 1 0
+	
+´¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¸¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¶
+=
+: (44)
+Step-10. New Compact Form: Eventually, for the relaxed
+attack strategies, we can write PD’s cost function in the
+following compact form:
+? (45)
+where  > -1,  > -1, and
+ = -1?R + S?s1? + 1?R11? + 31p?
+oo; (46)
+which follows since we have 1? = 1 and 1?, which yields,
+e.g., ?S?s = ?S?s1?.
+In the following lemma, we provide an LP to compute the
+best detection rule.
+Lemma 3. After the relaxation of PA’s strategy space, the
+best detection rule ? > [0; 1]do+1 is given by
+? = ? and ? = !?
+1?!?
+; (47)
+where !? > R is the solution of the following LP:
+max
+!>R
+1?! subject to +! B 1; ! C 0; (48)
+where the positive matrix4 + > R×
++ is defined by
++ = ?  if  is a positive matrix
+ + ( - o)11? otherwise;
+(49)
+where  > 0 and o > R is the minimum entry of .
+Proof. Note that by definition, we have
+min
+
+max
+
+? C max
+
+min
+
+?: (50)
+We are interested in only the upper value since we seek to
+compute the Stackelberg equilibrium where PA selects the
+4We say that a matrix is positive if its all entries are positive.
+11
+strategy  by knowing PD’s strategy . However, since the
+objective functions are linear in the optimization arguments
+while the constraint sets are convex, decoupled, and compact,
+the minimax theorem [24] shows that
+min
+
+max
+
+? = max
+
+min
+
+?; (51)
+which implies that the upper and lower values of the game
+are equal and that we have a saddle-point equilibrium in
+(45). Therefore, we can apply rather routine transformation
+of mixed-strategy equilibrium of zero-sum matrix games into
+an LP [24] in order to compute the best detection rule.
+A sketch of the routine transformation of (45) into an
+LP [24] is as follows: i) we show that the game (45) is
+strategically equivalent to a game where the game matrix is
+a positive matrix; ii) we can write (45) as the minimization
+of PA’s best response; iii) we can obtain a certain necessary
+condition on  in terms of PA’s best response since -1 is a
+simplex; iv) through a change of variable, we can obtain the
+equivalent LP (48).
+Corollary 1. The solution for the dual problem of (48), i.e.,
+min
+#>R
+1?# subject to ?
++# B 1; ! C 0; (52)
+yields that
+? = #?
+1?#?
+: (53)
+In the following section, we analyze the performance of
+the proposed detection mechanism numerically for various
+scenarios.
+V. NUMERICAL EXAMPLES
+The proposed framework can be applied to any linear
+block code since the analytical results are based only on the
+abstraction of the code, i.e., [n; k; d]q. Therefore, in order
+to compute the detection rule, specific to the underlying
+encoding-decoding scheme, we need the configuration of the
+code, i.e., [n; k; d]q, and the matrix R > R(n+1)×(do+1), as
+defined in (28). At run-time, the detection mechanism triggers
+an alert based only on the number of mismatched symbols.
+As numerical examples, in this section, we examine the performance
+of the proposed detection mechanisms for the smart
+codes that are constructed via Reed-Solomon coding [31].
+Particularly, Reed-Solomon code (RS-Code) is a maximum
+distance separable code that maximizes the minimum distance
+between any two distinct codewords within the general class
+of linear block codes, and it has widely used applications,
+e.g., QR codes. The minimum distance of RS-Code [n; k; d]q
+is given by
+d = n - k + 1; (54)
+which is the Singleton bound (1) for the linear block codes.
+In practical implementations, the alphabet size is in general
+selected a prime power and length of codeword is set n < q,
+e.g., often n = q - 1.
+As illustrative examples, we examine the performance
+of the proposed detection mechanism for the RS-Codes:
+[7; 5; 3]8, [7; 3; 5]8, [11; 5; 7]16, [11; 3; 9]16, [15; 5; 11]16, and
+TABLE I: Configuration of the RS-Codes
+RS-Code # distinct road signs # bits   do
+[7; 5; 3]8 85 = 32768 21 17 4 1
+[7; 3; 5]8 83 = 512 21 21 8 2
+[11; 5; 7]16 165 = 1; 048; 576 44 47 16 3
+[11; 3; 9]16 163 = 4096 44 47 32 4
+[15; 5; 11]16 165 = 1; 048; 576 60 85 64 5
+[15; 3; 13]16 163 = 4096 60 81 128 6
+TABLE II: Probability of decoding error/failure for the RSCodes
+over Different Channels. Highlighted cells correspond
+to the error/failure probabilities less than 0:02.
+RS-Code pe = 0:01 pe = 0:05 pe = 0:1 pe = 0:2
+[7; 5; 3]8 0:0020 0:0444 0:1497 0:4233
+[7; 3; 5]8 0:0000 0:0038 0:0257 0:1480
+[11; 5; 7]16 0:0000 0:0016 0:0185 0:1611
+[11; 3; 9]16 0:0000 0:0001 0:0028 0:0504
+[15; 5; 11]16 0:0000 0:0001 0:0022 0:0611
+[15; 3; 13]16 0:0000 0:0000 0:0003 0:0181
+[15; 3; 11]16 such that the corresponding distances for the
+decodable regions are given by do = 1; 2; 3; 4; 5; 6, respectively.
+For each RS-Code, Table I tabulates the maximum number of
+distinct road signs that can be encoded, the number of bits in
+the codeword, i.e., n×log2 q (which can give an idea about the
+size of the associated smart code), dimensions of the mixed
+strategies  > -1 and  > -1, and the decodable distance
+do > Z. The number of distinct road signs that a code can
+express is not directly related to the decodable distance. For
+example, [11; 5; 7]16 can encode as much as around 1 million
+distinct road signs, but its decodable distance is 3, which is
+less than the decodable distance of [15; 3; 13]16, which can
+encode as much as 4096 distinct road signs.
+In order to examine the performance across a range of
+relative small to high noise channels, we consider 4 different
+channels with probabilities of symbol errors: pe =
+0:01; 0:05; 0:1; 0:2. For each channel, in Table II, we tabulate
+the probability of decoding error/failure for the RS-Codes. We
+highlight the error/failure probabilities that are less than 0:02.
+Note that a high error rate yields that the associated code
+is not reliable even when there is no adversarial intervention.
+Correspondingly, if a code leads to a higher error/failure probability,
+then we can prefer codes that include more redundancy
+to improve reliability.
+Next, we compare the reliability of the smart road signs with
+respect to the cost metric (4) for the cases with and without
+the proposed detection mechanism. For example, we set all the
+road signs equally likely and we use the Monte Carlo method
+to compute R > R(n+1)×(do+1) over 106 independent trials. We
+set the multiplicative factors as
+1 = 2 = 4 = 100 and 3 = ; (55)
+where we set the weight of the objective O3), i.e., false alarm
+12
+TABLE III: The conservative cost if there were no detection
+mechanism.
+RS-Code pe = 0:01 pe = 0:05 pe = 0:1 pe = 0:2
+[7; 5; 3]8 9; 000 36; 251 55; 564 61; 491
+[7; 3; 5]8 112 778 1; 306 1; 683
+[11; 5; 7]16 257; 750 980; 210 1; 331; 300 1; 179; 500
+[11; 3; 9]16 913 4; 750 6; 836 6; 901
+[15; 5; 11]16 379; 300 1; 313; 600 1; 628; 300 1; 152; 200
+[15; 3; 13]16 1; 280 5; 774 7; 718 6; 108
+TABLE IV: The conservative cost if there were the proposed
+detection mechanism.
+RS-Code pe = 0:01 pe = 0:05 pe = 0:1 pe = 0:2
+[7; 5; 3]8 2; 246 9; 579 16; 167 22; 847
+[7; 3; 5]8 100 112 145 214
+[11; 5; 7]16 279 19; 394 88; 599 261; 270
+[11; 3; 9]16 100 105 160 530
+[15; 5; 11]16 100 5; 549 39; 194 145; 690
+[15; 3; 13]16 100 100 107 262
+TABLE V: Probability of False Alarms
+RS-Code pe = 0:01 pe = 0:05 pe = 0:1 pe = 0:2
+[7; 5; 3]8 0:0657 0:2884 0:4822 0:6724
+[7; 3; 5]8 0:0001 0:0296 0:1082 0:2711
+[11; 5; 7]16 0:0002 0:0135 0:0708 0:2259
+[11; 3; 9]16 0:0000 0:0013 0:0150 0:1077
+[15; 5; 11]16 0:0000 0:0052 0:0106 0:1031
+[15; 3; 13]16 0:0000 0:0000 0:0018 0:0406
+cost, in order to keep the probability of false alarm at a certain
+range, e.g., less than 10%, for the scenarios where the code
+has error/failure probability less than 0:02. In order to solve
+the LPs numerically, we use CVX, a package for specifying
+and solving convex programs [35], [36].
+In order to compute the (conservative) cost for the scenarios
+where there is no detection mechanism, we compute
+max
+>-1
+?o; (56)
+where
+o = 0 : : : 0 1?
+: (57)
+Particularly, since the right most column of  > R(do+1)×
+is a zero vector, as exemplified in (44), o > -1 yields
+that  = o = 0. In Table III, we tabulate the (conservative)
+cost of the codes over the channels examined if there were
+no detection mechanism. Note that we highlight the cells
+corresponding to the error/failure probabilities less than 0:02
+in order to distinguish the scenarios where the associated
+RS-Code can be used reliably. In Table IV, we tabulate the
+conservative cost of the codes if there were the proposed
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+Channel 1
+Codes
+Distance
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+Channel 2
+Codes
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+Channel 3
+Codes
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+Channel 4
+Codes
+0
+0.05
+0.1
+0.15
+0.2
+0.25
+0.3
+0.35
+Fig. 4: The probability of the number of symbol errors for
+the RS-Codes enumerated in the order of Table I across the
+channels enumerated with respect to the probability of symbol
+errors pe = 0:01; 0:05; 0:1; 0:2 in that order.
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+Channel 1
+Codes
+Distance
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+Channel 2
+Codes
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+Channel 3
+Codes
+1 2 3 4 5 6
+0
+1
+2
+3
+4
+5
+6
+Channel 4
+Codes
+0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+Fig. 5: The detection rule ? > [0; 1]do+1 for the RS-Codes
+enumerated across the channels enumerated.
+detection mechanism. The corresponding false alarm rates are
+provided in Table V. A comparison of Tables III and IV shows
+a substantial decrease in the conservative cost at the expense
+of a false alarm rate less than 10% in the scenarios where the
+error/failure probability is less than 0:02.
+Remark. We propose a way to relax certain constraints on
+the attack space to mitigate the scalability issue. It can
+be possible to obtain tighter approximations by considering
+tighter necessary conditions on PA’s actions; however, this
+would also increase computational complexity.
+Furthermore, in Figs 4, 5, and 6, we provide the probability
+of the number of symbol errors due to channels, the proposed
+detection rule, and the relax attack strategy, respectively. We
+observe that PD triggers alerts if the error rate is relatively
+high in general, which turns out to restrain the (powerful)
+13
+1 2 3 4 5 6
+10
+20
+30
+40
+50
+60
+70
+80
+Channel 1
+Codes
+Relaxed Attack
+1 2 3 4 5 6
+10
+20
+30
+40
+50
+60
+70
+80
+Channel 2
+Codes
+1 2 3 4 5 6
+10
+20
+30
+40
+50
+60
+70
+80
+Channel 3
+Codes
+1 2 3 4 5 6
+10
+20
+30
+40
+50
+60
+70
+80
+Channel 4
+Codes
+0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+Fig. 6: The relaxed attacker strategy ? > -1, which is a
+mixed strategy over the columns of  > R(n+1)×, as defined
+in (37).
+attacker to put more weight on the left most columns of
+ > R(n+1)×, as defined in (37), in his/her (relaxed) attack
+strategy. Particularly, at the equilibrium, the powerful attacker
+ends up crafting the smart code relatively more aggressively
+similar to the choice C3) as discussed in Subsection IV-A.
+Depending on the channel and the configuration of the code,
+the optimal detection rules can vary. Through the proposed
+mechanism, based on a game theoretical analysis, we can
+compute the best detection rule efficiently and systematically
+even at scales of around 1 million distinct road signs using an
+average personal computer without difficulty.
+VI. CONCLUSION
+A future trend in intelligent transportation systems is smart
+road signs equipped with smart codes. In addition to incorporating
+relatively larger amount of information, smart codes
+constructed via error-correction methods can provide robustness
+against small scale perturbations. We have introduced a
+game theoretical adversarial intervention detection mechanism
+for reliable smart road signs against threats that can perturb
+the smart codes at small or large scales intelligently. While
+designing the detection mechanism, we have considered multiple
+performance metrics regarding the cost associated with
+losing the opportunity of preventing future attacks by not being
+able to detect the attack, the cost associated with adversaryinduced
+decoding error or failure, the false alarm cost, and
+the ease of a deceptive perturbation. We have designed the
+detection rule against the worst-case attacker who maximizes
+the cost metrics by knowing the designed defense, i.e., under
+the solution concept of Stackelberg equilibrium where the
+defender is the leader. We have provided a relaxation on
+the attacker’s strategy space in order to mitigate possible
+computational issues that might arise while computing the
+equilibrium when there is a large number of distinct road signs.
+This has enabled us transform the problem into an LP with
+considerably small computational complexity. Finally, we have
+examined the performance numerically over various scenarios.
+The proposed game theoretical framework brings in new
+research directions for the applications of smart road signs in
+intelligent transportation systems. In the following, we identify
+some of these future research directions:
+Y We emphasize that sensor fusion where we collect information
+through several separate sources can lead to more
+resilient and robust systems [37]. In the future, smart road
+signs combined with state-of-the-art vision-based roadsign
+recognition algorithms can provide both reliable and
+effective recognition by smart vehicles.
+Y A network of smart vehicles can lead to more reliable
+traffic networks. Particularly, a detection mechanism faces
+a trade-off between detecting an adversarial intervention
+and avoiding false alarms. Since a road sign would be
+encountered by multiple smart vehicles, those vehicles
+can share the false alarm cost against an attack on the
+road sign. Similar to herd immunity [38], a herd of smart
+vehicles can achieve more reliable road sign recognition.
+Y Additionally, this approach can also be a good fit for other
+classification problems that can be viewed as a signaling
+problem, where we can incorporate visual smart codes
+while transmitting information. For example, computer
+vision for (warehouse) inventory management [39] or
+intelligent robotic sorting [40] would constitute other
+interesting applications for the framework developed here.
+REFERENCES
+[1] A. Mogelmose, M. M. Trivedi, and T. B. Moeslund, “Vision-based traffic
+sign detection and analysis for intelligent driver assistance systems: Perspectives
+and survey,” IEEE Transactions on Intelligent Transportation
+Systems, vol. 13, no. 4, pp. 1484–1497, 2012.
+[2] K. Eykholt, I. Evtimov, E. Fernandes, B. Li, A. Rahmati, C. Xiao,
+A. Prakash, T. Kohno, and D. Song, “Robust physical-world attacks
+on deep learning visual classification,” in Proceedings of the IEEE
+Conference on Computer Vision and Pattern Recognition (CVPR), 2018.
+[3] J. Jin, K. Fu, and C. Zhang, “Traffic sign recognition with hinge loss
+trained convolutional neural networks,” IEEE Transactions on Intelligent
+Transportation Systems, vol. 15, no. 5, pp. 1991–2000, 2014.
+[4] A. Gonz´alez, L. M. Bergasa, and J. J. Yebes, “Text detection and
+recognition on traffic panels from street-level imagery using visual
+appearance,” IEEE Transactions on Intelligent Transportation Systems,
+vol. 15, no. 1, pp. 228–238, 2014.
+[5] J. Greenhalgh and M. Mirmehdi, “Recognizing text-based traffic signs,”
+IEEE Transactions on Intelligent Transportation Systems, vol. 16, no. 3,
+pp. 1360–1369, 2015.
+[6] Y. Yang, H. Luo, H. Xu, and F. Wu, “Towards real-time traffic sign
+detection and classification,” IEEE Transactions on Intelligent Transportation
+Systems, vol. 17, no. 7, pp. 2022–2031, 2016.
+[7] Y. Zeng, X. Xu, D. Shen, Y. Fang, and Z. Xiao, “Traffic sign recognition
+using kernel extreme learning machines with deep perceptual features,”
+IEEE Transactions on Intelligent Transportation Systems, vol. 18, no. 6,
+pp. 1647–1653, 2017.
+[8] C. Liu, F. Chang, and Z. Chen, “Rapid multiclass traffic sign detection in
+high-resolution images,” IEEE Transactions on Intelligent Transportation
+Systems, vol. 15, no. 6, pp. 2394–2403, 2014.
+[9] X. Lu, Y. Wang, X. Zhou, Z. Zhang, and Z. Ling, “Traffic sign recognition
+via multi-modal tree-structure embedded multi-task learning,” IEEE
+Transactions on Intelligent Transportation Systems, vol. 18, no. 4, pp.
+960–972, 2017.
+[10] C. Szegedy, W. Zaremba, I. Sutskever, J. Bruna, D. Erhan, I. Goodfellow,
+and R. Fergus, “Intriguing properties of neural networks,” in
+arXiv:1312.6199, 2014.
+[11] I. Goodfellow, J. Shlens, and C. Szegedy, “Explaining and harnessing
+adversarial examples,” in arXiv:1412.6572, 2015.
+[12] A. Athalye, N. Carlini, and D. Wagner, “Obfuscated gradients give a
+false sense of security: Circumventing defenses to adversarial examples,”
+in 35th International Conference on Machine Learning (ICML), 2018.
+14
+[13] A. Athalye, L. Engstrom, A. Ilyas, and K. Kwok, “Synthesizing robust
+adversarial examples,” in 35th International Conference on Machine
+Learning (ICML), 2018.
+[14] IEEE, “IEEE standard for wireless access in vehicular environments
+security services for applications and management messages,” IEEE Std
+1609.2-2013 (Revision of IEEE Std 1609.2-2006), Apr. 2013.
+[15] J. B. Kenney, “Dedicated short-range communications (DSRC) standards
+in the United States,” Proceedings of the IEEE, vol. 99, no. 7, pp. 1162–
+1182, 2011.
+[16] H. Liang, M. Jagielski, B. Zheng, C.-W. Lin, E. Kang, S. Shiraishi,
+C. Nita-Rotaru, and Q. Zhu, “Network and system level security in
+connected vehicle applications,” in IEEE/ACM International Conference
+on Computer-Aided Design (ICCAD), 2016.
+[17] K. Schwab, “The quest to design a smarter
+road,” https://www.fastcompany.com/90140902/
+smart-roads-are-coming-do-we-need-them, 2017.
+[18] K. Hyatt, “3M Connected Roads aim to make life easier for
+autonomous vehicles,” https://www.cnet.com/roadshow/news/
+3m-connected-roads-aim-to-make-life-easier-for-autonomous-vehicles/,
+2018.
+[19] B. Fan, W. Lin, and X. Yang, “An efficient framework for recognizing
+traffic lights in night traffic images,” in IEEE Intl. Congress on Image
+and Signal Processing (CISP), 2012.
+[20] L. Rosa, “QR code recognition based on image processing,” http:
+//advancedsourcecode.com/qrcode.asp, 2012.
+[21] R. H. Blahut, Algebraic Codes for Data Transmission. Cambridge
+University Press, 2002.
+[22] Y. Li, L. Shi, P. Cheng, J. Chen, and D. Quevedo, “Jamming attacks on
+remote state estimation in cyber-physical systems,” IEEE Trans. Autom.
+Control, vol. 60, no. 10, pp. 2831–2836, 2015.
+[23] H. Zhang, P. Cheng, L. Shi, and J. Chen, “Optimal DoS attack scheduling
+in wireless networked control systems,” IEEE Trans. Control Syst.
+Technol., vol. 24, no. 3, pp. 843–852, 2016.
+[24] T. Bas¸ar and G. J. Olsder, Dynamic Noncooperative Game Theory.
+Society for Industrial Mathematics (SIAM) Series in Classics in Applied
+Mathematics, 1999.
+[25] N. Dalvi, P. Domingos, Mausam, S. Sanghai, and D. Verma, “Adversarial
+classification,” in Proceedings of the 10th ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining, 2004.
+[26] M. Br¨uckner and T. Scheffer, “Nash equilibria of static prediction
+games,” in Proceedings of Advances in Neural Information Processing
+(NIPS), 2009.
+[27] ——, “Stackelberg games for adversarial prediction problems,” in
+Proceedings of the 17th ACM SIGKDD International Conference on
+Knowledge Discovery and Data Mining, 2011.
+[28] L. Dritsoula, P. Loiseau, and J. Musacchio, “A game-theoretic analysis of
+adversarial classification,” IEEE Transactions on Information Forensics
+and Security, vol. 12, no. 12, pp. 3094–3109, 2017.
+[29] R. C. Singleton, “Ieee transactions on information theory,” Maximum
+distance q-nary codes, vol. 10, no. 2, pp. 116–118, 1964.
+[30] S. Roman, Coding and Information Theory. Springer-Verlag, 1992.
+[31] I. S. Reed and G. Solomon, “Polynomial codes over certain finite fields,”
+Journal of the Society for Industrial and Applied Mathematics (SIAM),
+vol. 8, no. 2, pp. 300–304, 1960.
+[32] A.-G. A. Daraiseh and C. W. Baum, “Decoder error and failure probabilities
+for Reed-Solomon codes: Decodable vectors method,” IEEE
+Transactions on Communications, vol. 46, no. 7, pp. 857–859, 1998.
+[33] E. Ok, Real Analysis with Economics Applications. Princeton University
+Press, 2007.
+[34] D. P. Kroese, T. Brereton, T. Taimre, and Z. I. Botev, “Why the Monte
+Carlo method is so important today,” Wiley Interdisciplinary Reviews:
+Computational Statistics, vol. 6, no. 6, pp. 386–392, 2014.
+[35] M. Grant and S. Boyd, “Graph implementations for nonsmooth convex
+programs,” in Recent Advances in Learning and Control. Springer-
+Verlag Limited, 2008, pp. 95–110.
+[36] ——, “CVX: Matlab software for disciplined convex programming,
+version 2.1,” http://cvxr.com/cvx, Mar 2014.
+[37] L. A. Klein, Sensor and data fusion: A tool for information assessment
+and decision making. SPIE Press, 2004.
+[38] P. Fine, K. Eames, and D. L. Heymann, ““herd immunity”: A rough
+guide,” Clinical Infectious Diseases, vol. 52, no. 7, pp. 911–916, 2011.
+[39] K. K. Katircioglu and Y. Li, “Machine vision technology for shelf
+inventory management,” U.S. Patent US 2015/0 262 116 A1, Sep., 2015.
+[40] J. Guerin, S. Thiery, E. Nyiri, and O. Gibaru, “Unsupervised robotic
+sorting: Towards autonomous decision making robots,” International
+Journal of Artificial Intelligence and Applications, vol. 9, no. 2, 2018.
+Muhammed O. Sayin received the B.S. and M.S. degrees in electrical and
+electronics engineering from Bilkent University, Ankara, Turkey, in 2013 and
+2015, respectively. He is currently pursuing the Ph.D. degree in electrical and
+computer engineering from the University of Illinois at Urbana-Champaign
+(UIUC). His current research interests include dynamic games and decision
+theory, security, stochastic control, and cyber-physical systems.
+Chung-Wei Lin received the B.S. degree in computer science and information
+engineering and the M.S. degree in electronics engineering from the National
+Taiwan University, Taipei, Taiwan. He received the Ph.D. degree in electrical
+engineering and computer sciences from the University of California, Berkeley,
+Berkeley, CA, USA. He is an Assistant Professor at the Department of
+Computer Science and Information Engineering, National National Taiwan
+University, Taipei, Taiwan. His research includes design, analysis, security,
+and certification of automotive systems.
+Eunsuk Kang received a Ph.D. degree in computer science from MIT,
+and a B.S.E. degree from the University of Waterloo in Canada. He is an
+Assistant Professor in the Institute for Software Research, School of Computer
+Science at Carnegie Mellon University. His research interests are in software
+engineering, formal methods, security, and system safety.
+Shinichi Shiraishi (M’00) received the B.S., M.S., and Ph.D. degrees in
+electronics engineering from Hokkaido University, Sapporo, Japan, in 1997,
+1999, and 2002, respectively. He is currently a Group Leader with Toyota
+InfoTechnology Center, Co., Ltd., Minato-ku, Tokyo, Japan. His research interests
+include software assurance, software architecture, modeling languages,
+and design analysis.
+Tamer Bas¸ar (S’71-M’73-SM’79-F’83-LF’13) is with the University of
+Illinois at Urbana-Champaign, where he holds the academic positions of
+Swanlund Endowed Chair; Center for Advanced Study Professor of Electrical
+and Computer Engineering; Research Professor at the Coordinated Science
+Laboratory; and Research Professor at the Information Trust Institute. He is
+also the Director of the Center for Advanced Study.
+He received B.S.E.E. from Robert College, Istanbul, and M.S., M.Phil, and
+Ph.D. from Yale University. He is a member of the US National Academy
+of Engineering, member of the European Academy of Sciences, and Fellow
+of IEEE, IFAC (International Federation of Automatic Control) and SIAM
+(Society for Industrial and Applied Mathematics), and has served as president
+of IEEE CSS (Control Systems Society), ISDG (International Society of
+Dynamic Games), and AACC (American Automatic Control Council). He has
+received several awards and recognitions over the years, including the highest
+awards of IEEE CSS, IFAC, AACC, and ISDG, the IEEE Control Systems
+Award, and a number of international honorary doctorates and professorships.
+He has over 900 publications in systems, control, communications, and
+dynamic games, including books on non-cooperative dynamic game theory,
+robust control, network security, wireless and communication networks, and
+stochastic networked control. He was the Editor-in-Chief of Automatica
+between 2004 and 2014, and is currently editor of several book series. His
+current research interests include stochastic teams, games, and networks;
+distributed algorithms; security; and cyber-physical systems.
